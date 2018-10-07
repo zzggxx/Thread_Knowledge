@@ -35,25 +35,32 @@ public class MainActivity extends AppCompatActivity {
 //        }
 
         /*--------------线程安全的问题----------------------*/
-        synchronizedThread();
+//        synchronizedThread();
+        /*--------------线程间通讯的问题----------------------*/
+        notifyAndWait();
+
 
     }
 
-    private void synchronizedThread() {
-        final Outputer outputer = new Outputer();
+    private void notifyAndWait() {
+        /*多个线程并发执行时, 在默认情况下CPU是随机切换线程的如果我们希望他们有规律的执行, 就可以使用通信, 例如每个线程执行一次打印*/
+        final Business business = new Business();
         new Thread(new Runnable() {
             @Override
             public void run() {
-                while (true) {
-                    try {
-                        Thread.sleep(100);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                    outputer.output("zhougaoxiong");
+                for (int i = 0; i < 5; i++) {
+                    business.mian(i);
                 }
             }
         }).start();
+
+        for (int i = 0; i < 5; i++) {
+            business.sub(i);
+        }
+    }
+
+    private void synchronizedThread() {
+        final Outputer outputer2 = new Outputer();
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -63,7 +70,21 @@ public class MainActivity extends AppCompatActivity {
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
-                    outputer.output("will");
+                    outputer2.output2("zhougaoxiong");
+                }
+            }
+        }).start();
+        final Outputer outputer3 = new Outputer();
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                while (true) {
+                    try {
+                        Thread.sleep(100);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    outputer3.output3("will");
                 }
             }
         }).start();
@@ -79,9 +100,9 @@ public class MainActivity extends AppCompatActivity {
             System.out.println();
         }
 
-        //        output1和output2一样,把内部全锁等于方法锁.
-//        静态所使用的锁也是类的字节码.
-//        锁必须唯一必须唯一必须唯一!
+        //        output1和output2一样,把内部全锁等于方法锁,但是锁却不一样,一个是字节码一个this.
+        //        output1和output3一样是字节码.
+        //        锁必须唯一必须唯一必须唯一!
         public void output1(String name) {
             synchronized (Outputer.class) {
                 int len = name.length();
@@ -92,6 +113,7 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
+        //        静态所使用的锁是类的字节码,而这里是此类的对象this.
         public synchronized void output2(String name) {
             int len = name.length();
             for (int i = 0; i < len; i++) {
