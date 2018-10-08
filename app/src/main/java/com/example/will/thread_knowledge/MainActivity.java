@@ -4,12 +4,16 @@ import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
 
 public class MainActivity extends AppCompatActivity {
 
-    private static int count = 0;
+    private static int count;
+    int data;
+    private HashMap<String, Integer> map = new HashMap<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,9 +45,43 @@ public class MainActivity extends AppCompatActivity {
 //        notifyAndWait();
         /*----经典的买票问题----*/
 //        ticketsSeller();
+        /*----线程内变量共享问题----*/
+//        commonShareThreadLocal();
         /*--------------线程组--------------------------------------------------------------------*/
 //        threadGroup();
 
+    }
+
+    /**
+     * 作用:每一个线程的值独立存起来互不影响
+     * 应用场景:数据库的事务,a给b打钱,同时c给d打钱,都是使用了事务但是有一样,小心commit的不是对应的begintransition
+     */
+    private void commonShareThreadLocal() {
+        for (int i = 0; i < 2; i++) {
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    data = new Random().nextInt();
+                    map.put(Thread.currentThread().getName(), data);
+                    new ClassA().getData();
+                    new ClassB().getData();
+                }
+            }).start();
+        }
+    }
+
+    public class ClassA {
+        public void getData() {
+            System.out.println("A_" + Thread.currentThread().getName() + "_" +
+                    map.get(Thread.currentThread().getName()));
+        }
+    }
+
+    public class ClassB {
+        public void getData() {
+            System.out.println("B_" + Thread.currentThread().getName() + "_" +
+                    map.get(Thread.currentThread().getName()));
+        }
     }
 
     private void ticketsSeller() {
