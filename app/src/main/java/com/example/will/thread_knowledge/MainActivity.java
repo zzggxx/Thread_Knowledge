@@ -16,10 +16,10 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        /*--------------线程的两种方法----------------------*/
+        /*--------------线程的两种方法-------------------------------------------------------------*/
 //        threadCommonMethod();
 
-        /*--------------timer定时器----------------------*/
+        /*--------------timer定时器---------------------------------------------------------------*/
         /*-----timer定时器普通方法------*/
 //        TimerCommonMethod();
         /*-----timer定时器交替执行------*/
@@ -34,11 +34,59 @@ public class MainActivity extends AppCompatActivity {
 //            }
 //        }
 
-        /*--------------线程安全的问题----------------------*/
+        /*--------------线程安全的问题-------------------------------------------------------------*/
 //        synchronizedThread();
-        /*--------------线程间通讯的问题----------------------*/
-        notifyAndWait();
+        /*--------------线程间通讯的问题-----------------------------------------------------------*/
+        /*----主和子线程交替打印,设计模式很好----*/
+//        notifyAndWait();
+        /*----经典的买票问题----*/
+//        ticketsSeller();
+        /*--------------线程组--------------------------------------------------------------------*/
+//        threadGroup();
 
+    }
+
+    private void ticketsSeller() {
+        TicketsSeller t1 = new TicketsSeller();
+        TicketsSeller t2 = new TicketsSeller();
+        TicketsSeller t3 = new TicketsSeller();
+        TicketsSeller t4 = new TicketsSeller();
+
+        t1.setName("窗口1");
+        t2.setName("窗口2");
+        t3.setName("窗口3");
+        t4.setName("窗口4");
+        t1.start();
+        t2.start();
+        t3.start();
+        t4.start();
+    }
+
+    public void threadGroup() {
+
+        MyRunnable mr = new MyRunnable();
+        Thread t1 = new Thread(mr, "张三");
+        ThreadGroup tg1 = t1.getThreadGroup();
+        System.out.println(tg1.getName());                //默认的是主线程
+
+        ThreadGroup tg = new ThreadGroup("我是一个新的线程组");        //创建新的线程组
+        Thread t2 = new Thread(tg, mr, "张三1");                    //将线程t1放在组中
+        System.out.println(t2.getThreadGroup().getName());        //获取组名
+        System.out.println(t2.getName());        //获取线程名字
+        System.out.println(Thread.currentThread().getName());        //获取当前线程名字
+
+        tg.setDaemon(true);
+    }
+
+
+    class MyRunnable implements Runnable {
+
+        @Override
+        public void run() {
+            for (int i = 0; i < 1000; i++) {
+                System.out.println(Thread.currentThread().getName() + "...." + i);
+            }
+        }
 
     }
 
