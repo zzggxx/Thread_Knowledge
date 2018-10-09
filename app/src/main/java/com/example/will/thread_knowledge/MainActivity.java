@@ -4,7 +4,6 @@ import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -12,8 +11,6 @@ import java.util.TimerTask;
 public class MainActivity extends AppCompatActivity {
 
     private static int count;
-    int data;
-    private HashMap<String, Integer> map = new HashMap<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,7 +43,7 @@ public class MainActivity extends AppCompatActivity {
         /*----经典的买票问题----*/
 //        ticketsSeller();
         /*----线程内变量共享问题----*/
-//        commonShareThreadLocal();
+        commonShareThreadLocal();
         /*--------------线程组--------------------------------------------------------------------*/
 //        threadGroup();
 
@@ -61,8 +58,9 @@ public class MainActivity extends AppCompatActivity {
             new Thread(new Runnable() {
                 @Override
                 public void run() {
-                    data = new Random().nextInt();
-                    map.put(Thread.currentThread().getName(), data);
+                    int data = new Random().nextInt();
+                    MyThreadLocalData.newInstance().setName("Name_" + data);
+                    MyThreadLocalData.newInstance().setAge(data);
                     new ClassA().getData();
                     new ClassB().getData();
                 }
@@ -72,15 +70,51 @@ public class MainActivity extends AppCompatActivity {
 
     public class ClassA {
         public void getData() {
-            System.out.println("A_" + Thread.currentThread().getName() + "_" +
-                    map.get(Thread.currentThread().getName()));
+            MyThreadLocalData data = MyThreadLocalData.newInstance();
+            System.out.println("A_" + data.getName() + "_" + data.getAge());
         }
     }
 
     public class ClassB {
         public void getData() {
-            System.out.println("B_" + Thread.currentThread().getName() + "_" +
-                    map.get(Thread.currentThread().getName()));
+            MyThreadLocalData data = MyThreadLocalData.newInstance();
+            System.out.println("B_" + data.getName() + "_" + data.getAge());
+        }
+    }
+
+    public static class MyThreadLocalData {
+
+        private MyThreadLocalData() {
+        }
+
+        public static MyThreadLocalData newInstance() {
+            MyThreadLocalData instance = map.get();
+            if (instance == null) {
+                instance = new MyThreadLocalData();
+                map.set(instance);
+            }
+            return instance;
+        }
+
+        public static ThreadLocal<MyThreadLocalData> map = new InheritableThreadLocal<>();
+
+        public String name;
+        public int age;
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
+
+        public int getAge() {
+            return age;
+        }
+
+        public void setAge(int age) {
+            this.age = age;
         }
     }
 
