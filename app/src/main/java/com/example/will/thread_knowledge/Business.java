@@ -18,7 +18,7 @@ class Business {
             System.out.println(Thread.currentThread().getName() + "__" + j + "__loop of__" + i);
         }
         isShowSub = !isShowSub;
-        this.notify();              //随机唤醒单个等待的线程
+        this.notify();              //随机唤醒单个等待的线程,线程可能会假醒来
     }
 
     public synchronized void sub(int i) {

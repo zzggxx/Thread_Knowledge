@@ -4,7 +4,6 @@ import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -12,16 +11,18 @@ import java.util.TimerTask;
 public class MainActivity extends AppCompatActivity {
 
     private static int count;
-    int data;
-    private HashMap<String, Integer> map = new HashMap<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+
+
         /*--------------线程的两种方法-------------------------------------------------------------*/
 //        threadCommonMethod();
+
+
 
         /*--------------timer定时器---------------------------------------------------------------*/
         /*-----timer定时器普通方法------*/
@@ -38,15 +39,27 @@ public class MainActivity extends AppCompatActivity {
 //            }
 //        }
 
+
+
         /*--------------线程安全的问题-------------------------------------------------------------*/
 //        synchronizedThread();
+
+
+
         /*--------------线程间通讯的问题-----------------------------------------------------------*/
         /*----主和子线程交替打印,设计模式很好----*/
 //        notifyAndWait();
-        /*----经典的买票问题----*/
+        /*----经典的买票问题,注意两种方式的区别----*/
+        // 使用Thread方式
 //        ticketsSeller();
+        // 使用Runnable对象方式
+//        ticketsSeller2();
+
         /*----线程内变量共享问题----*/
 //        commonShareThreadLocal();
+
+
+
         /*--------------线程组--------------------------------------------------------------------*/
 //        threadGroup();
         /*--------------线程组-------tag1-------------------------------------------------------------*/
@@ -62,8 +75,9 @@ public class MainActivity extends AppCompatActivity {
             new Thread(new Runnable() {
                 @Override
                 public void run() {
-                    data = new Random().nextInt();
-                    map.put(Thread.currentThread().getName(), data);
+                    int data = new Random().nextInt();
+                    MyThreadLocalData.newInstance().setName("Name_" + data);
+                    MyThreadLocalData.newInstance().setAge(data);
                     new ClassA().getData();
                     new ClassB().getData();
                 }
@@ -71,34 +85,25 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public class ClassA {
-        public void getData() {
-            System.out.println("A_" + Thread.currentThread().getName() + "_" +
-                    map.get(Thread.currentThread().getName()));
-        }
-    }
-
-    public class ClassB {
-        public void getData() {
-            System.out.println("B_" + Thread.currentThread().getName() + "_" +
-                    map.get(Thread.currentThread().getName()));
-        }
-    }
-
     private void ticketsSeller() {
-        TicketsSeller t1 = new TicketsSeller();
-        TicketsSeller t2 = new TicketsSeller();
-        TicketsSeller t3 = new TicketsSeller();
-        TicketsSeller t4 = new TicketsSeller();
+        TicketsSeller t1 = new TicketsSeller("窗口1");
+        TicketsSeller t2 = new TicketsSeller("窗口2");
+        TicketsSeller t3 = new TicketsSeller("窗口3");
+        TicketsSeller t4 = new TicketsSeller("窗口4");
 
-        t1.setName("窗口1");
-        t2.setName("窗口2");
-        t3.setName("窗口3");
-        t4.setName("窗口4");
         t1.start();
         t2.start();
         t3.start();
         t4.start();
+    }
+
+    private void ticketsSeller2() {
+        TicketsSeller2 t1 = new TicketsSeller2();
+
+        new Thread(t1).start();
+        new Thread(t1).start();
+        new Thread(t1).start();
+        new Thread(t1).start();
     }
 
     public void threadGroup() {
@@ -117,20 +122,9 @@ public class MainActivity extends AppCompatActivity {
         tg.setDaemon(true);
     }
 
-
-    class MyRunnable implements Runnable {
-
-        @Override
-        public void run() {
-            for (int i = 0; i < 1000; i++) {
-                System.out.println(Thread.currentThread().getName() + "...." + i);
-            }
-        }
-
-    }
-
     private void notifyAndWait() {
-        /*多个线程并发执行时, 在默认情况下CPU是随机切换线程的如果我们希望他们有规律的执行, 就可以使用通信, 例如每个线程执行一次打印*/
+        /*多个线程并发执行时, 在默认情况下CPU是随机切换线程的如果我们希望他们有规律的执行, 就
+        可以使用通信, 例如每个线程执行一次打印*/
         final Business business = new Business();
         new Thread(new Runnable() {
             @Override
@@ -177,47 +171,6 @@ public class MainActivity extends AppCompatActivity {
         }).start();
     }
 
-    static class Outputer {
-        //        无锁
-        public void output(String name) {
-            int len = name.length();
-            for (int i = 0; i < len; i++) {
-                System.out.print(name.charAt(i));
-            }
-            System.out.println();
-        }
-
-        //        output1和output2一样,把内部全锁等于方法锁,但是锁却不一样,一个是字节码一个this.
-        //        output1和output3一样是字节码.
-        //        锁必须唯一必须唯一必须唯一!
-        public void output1(String name) {
-            synchronized (Outputer.class) {
-                int len = name.length();
-                for (int i = 0; i < len; i++) {
-                    System.out.print(name.charAt(i));
-                }
-                System.out.println();
-            }
-        }
-
-        //        静态所使用的锁是类的字节码,而这里是此类的对象this.
-        public synchronized void output2(String name) {
-            int len = name.length();
-            for (int i = 0; i < len; i++) {
-                System.out.print(name.charAt(i));
-            }
-            System.out.println();
-        }
-
-        public static synchronized void output3(String name) {
-            int len = name.length();
-            for (int i = 0; i < len; i++) {
-                System.out.print(name.charAt(i));
-            }
-            System.out.println();
-        }
-    }
-
     /**
      * 子炸弹炸的时候又埋了一个炸弹,必须的重新埋炸弹,炸弹只能调度一次.
      */
@@ -250,6 +203,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void threadCommonMethod() {
+
+//        两种方式
         new Thread() {
             @Override
             public void run() {
@@ -265,6 +220,7 @@ public class MainActivity extends AppCompatActivity {
             }
         }).start();
 
+//        辨别下
         new Thread(new Runnable() {
             @Override
             public void run() {
