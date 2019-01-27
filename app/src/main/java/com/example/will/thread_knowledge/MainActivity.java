@@ -12,6 +12,8 @@ public class MainActivity extends AppCompatActivity {
 
     private static int count;
 
+    private ShardData shardData2 = new ShardData();
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -55,14 +57,49 @@ public class MainActivity extends AppCompatActivity {
         // 使用Runnable对象方式
 //        ticketsSeller2();
 
-        /*----线程内变量共享问题----*/
+
+
+
+        /*-------------线程内变量共享问题----------------------------------------------------------*/
+        /*----使用ThreadLocal类维护自己线程内的数据----*/
 //        commonShareThreadLocal();
+        /*----使用ThreadLocal类维护自己线程内的数据----*/
+//        moreThreadShardData();
+
 
 
 
         /*--------------线程组--------------------------------------------------------------------*/
 //        threadGroup();
 
+    }
+
+    private void moreThreadShardData() {
+        // 设计4个线程每一次两个线程对j++,另外两个j--.
+
+        /*---------直接塞----------*/
+//        ShardData shardData = new ShardData();
+//        new Thread(new DecrementRunnable(shardData)).start();
+//        new Thread(new Incrementrunnable(shardData)).start();
+
+        /*---------直接拿,也可以使用成员变量,内部类访问共同的外部类----------*/
+        final ShardData shardData1 = new ShardData();
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                while (true) {
+                    shardData1.inrement();
+                }
+            }
+        }).start();
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                while (true) {
+                    shardData1.decrement();
+                }
+            }
+        }).start();
     }
 
     /**
